@@ -38,23 +38,29 @@ export const constantRouterMap = [
   },
 
   {
-    path: '/example',
+    path: '/site',
     component: Layout,
-    redirect: '/example/table',
-    name: 'Example',
-    meta: { title: 'Example', icon: 'example' },
+    redirect: '/site/press',
+    name: 'Site',
+    meta: { title: 'Site', icon: 'example' },
     children: [
       {
-        path: 'table',
-        name: 'Table',
-        component: () => import('@/views/table/index'),
-        meta: { title: 'Table', icon: 'table' }
+        path: 'press',
+        name: 'Press',
+        component: () => import('@/views/press/index'),
+        meta: { title: 'Press', icon: 'table' }
       },
       {
-        path: 'tree',
-        name: 'Tree',
-        component: () => import('@/views/tree/index'),
-        meta: { title: 'Tree', icon: 'tree' }
+        path: 'Tickets',
+        name: 'Tickets',
+        component: () => import('@/views/tickets/index'),
+        meta: { title: 'Tickets', icon: 'table' }
+      },
+      {
+        path: 'channel',
+        name: 'Channel',
+        component: () => import('@/views/channel/index'),
+        meta: { title: 'Channel', icon: 'channel' }
       }
     ]
   },
@@ -147,5 +153,6 @@ export const constantRouterMap = [
 export default new Router({
   // mode: 'history', //后端支持可开
   scrollBehavior: () => ({ y: 0 }),
+  mode: 'history',
   routes: constantRouterMap
 })
