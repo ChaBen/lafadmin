@@ -25,9 +25,13 @@ const user = {
   },
 
   actions: {
+
     // 登录
     Login({ commit }, userInfo) {
       return new Promise((resolve, reject) => {
+        this.dispatch('users', userInfo).then(res => {
+          console.log(res)
+        })
         login(userInfo).then(response => {
           const data = response.data
           setToken(data.access_token)

@@ -60,7 +60,13 @@ export const constantRouterMap = [
         path: 'channel',
         name: 'Channel',
         component: () => import('@/views/channel/index'),
-        meta: { title: 'Channel', icon: 'channel' }
+        meta: { title: 'Channel', icon: 'table' }
+      },
+      {
+        path: 'artists',
+        name: 'Artists',
+        component: () => import('@/views/artists/index'),
+        meta: { title: 'Artists', icon: 'table' }
       }
     ]
   },

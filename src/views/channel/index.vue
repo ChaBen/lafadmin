@@ -26,7 +26,7 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="80%">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="70px" style="width: calc(100% - 70px); margin-left:50px;">
         <el-form-item label="Url" prop="url">
-          <el-input v-model="temp.url"/>
+          <el-input v-model="temp.url" :autofocus="true" />
         </el-form-item>
         <div v-if="temp.src !== ''" class="video">
           <iframe :src="`https://www.youtube.com/embed/${temp.src}`" style="height: 400px;" width="100%" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>&nbsp</iframe>
@@ -42,12 +42,13 @@
 </template>
 
 <script>
-import { getList, createArticle, updateArticle, deleteArticle } from '@/api/channel'
+import { mapActions } from 'vuex'
 
 export default {
   data() {
     return {
       videos: {},
+      videoLoading: true,
       dialogStatus: '',
       dialogFormVisible: false,
       temp: {
@@ -70,17 +71,20 @@ export default {
     }
   },
   created() {
-    this.fetchData()
+    this.getData()
   },
   methods: {
+    ...mapActions('channel', ['find', 'create', 'update', 'remove']),
+    async getData() {
+      this.listLoading = true
+      const param = { lang: 'ko' }
+      this.videos = (await this.find(param)).data
+      console.log(this.videos)
+      this.listLoading = false
+    },
     filterNode(value, data) {
       if (!value) return true
       return data.label.indexOf(value) !== -1
-    },
-    fetchData() {
-      getList().then(res => {
-        this.videos = res.data
-      })
     },
     embedId(url) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
@@ -126,16 +130,16 @@ export default {
             })
             return
           }
-          createArticle(this.temp).then((res) => {
-            this.videos.push(res.data)
-            this.dialogFormVisible = false
+          this.create(this.temp).then(res => {
+            this.videos.push(res)
             this.$notify({
               title: '성공',
               message: '추가성공',
               type: 'success',
               duration: 2000
             })
-          })
+            this.dialogFormVisible = false
+          }).catch(this.error)
         }
       })
     },
@@ -150,7 +154,8 @@ export default {
             })
             return
           }
-          updateArticle(this.temp).then((res) => {
+          const data = this.temp
+          this.update([data.id, data, {}]).then(() => {
             this.dialogFormVisible = false
             this.$notify({
               title: '수정',
@@ -163,11 +168,11 @@ export default {
       })
     },
     deleteDate(row) {
-      this.$confirm('정말로 삭제하시겠습니까?', 'Channel', {
+      this.$confirm('정말로 삭제하시겠습니까?', 'Press', {
         confirmButtonText: '삭제',
         cancelButtonText: '취소'
       }).then(() => {
-        deleteArticle(row.id).then(() => {
+        this.remove(row.id).then(() => {
           this.$notify({
             title: '삭제',
             message: '삭제성공',
@@ -176,7 +181,13 @@ export default {
           })
           const index = this.videos.indexOf(row)
           this.videos.splice(index, 1)
-        })
+        }).catch(this.error)
+      })
+    },
+    error(err) {
+      this.$notify.error({
+        title: 'Error',
+        message: err.message
       })
     }
   }

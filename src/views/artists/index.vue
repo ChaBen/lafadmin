@@ -1,11 +1,15 @@
 <template>
   <div class="app-container">
     <div class="filter-container tar">
+      <el-select v-model="lang" @change="getData">
+        <el-option v-for="item in tabMapOptions" :key="item.key" :label="item.label" :value="item.label"/>
+      </el-select>
       <el-button class="filter-item" style="margin-left: 10px;" type="primary" @click="handleCreate">추가</el-button>
     </div>
     <el-table
       v-loading="listLoading"
       :data="list"
+      class="text-hidden"
       element-loading-text="Loading"
       border
       fit
@@ -15,14 +19,19 @@
           {{ scope.$index + 1 }}
         </template>
       </el-table-column>
-      <el-table-column label="타이틀">
+      <el-table-column label="언어" width="80">
+        <template slot-scope="scope">
+          {{ scope.row.lang }}
+        </template>
+      </el-table-column>
+      <el-table-column label="타이틀" width="250">
         <template slot-scope="scope">
           <a href="javascript:void(0)" @click="handleUpdate(scope.row)">{{ scope.row.title }}</a>
         </template>
       </el-table-column>
-      <el-table-column label="텍스트" width="250" align="center">
+      <el-table-column label="텍스트" align="center">
         <template slot-scope="scope">
-          {{ scope.row.subtitle }}
+          {{ scope.row.body }}
         </template>
       </el-table-column>
       <el-table-column align="center" label="Actions" width="200">
@@ -34,16 +43,19 @@
     </el-table>
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" width="80%">
-      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="70px" style="width: calc(100% - 70px); margin-left:50px;">
+      <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="120px">
+        <el-form-item label="언어" prop="lang">
+          <el-select v-model="temp.lang" @change="getData">
+            <el-option v-for="item in dialogLang" :key="item.key" :label="item.label" :value="item.label"/>
+          </el-select>
+        </el-form-item>
         <el-form-item label="타이틀" prop="title">
           <el-input v-model="temp.title" :autofocus="true"/>
         </el-form-item>
-        <el-form-item label="링크" prop="link">
-          <el-input v-model="temp.link"/>
+        <el-form-item label="유트브 링크" prop="src">
+          <el-input v-model="temp.src"/>
         </el-form-item>
-        <el-form-item label="텍스트" prop="subtitle">
-          <el-input v-model="temp.subtitle"/>
-        </el-form-item>
+        <Tinymce :height="500" v-model="temp.body" />
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">cancel</el-button>
@@ -56,24 +68,39 @@
 
 <script>
 import { mapActions } from 'vuex'
+import Tinymce from '@/components/Tinymce'
 
 export default {
+  components: {
+    Tinymce
+  },
   data() {
     return {
+      lang: '전체 언어',
       list: null,
       listLoading: true,
       dialogStatus: '',
       dialogFormVisible: false,
       temp: {
         id: null,
+        lang: 'Korea',
         title: null,
-        link: null,
-        subtitle: null
+        body: null,
+        src: null,
+        subtitle: null,
+        sliders: null
       },
+      tabMapOptions: [
+        { label: '전체 언어', key: 'all' },
+        { label: 'Korea', key: 'ko' },
+        { label: 'China', key: 'cn' },
+        { label: 'USA', key: 'en' },
+        { label: 'Japan', key: 'jp' }
+      ],
       rules: {
         title: [{ required: true, message: 'title is required', trigger: 'blur' }],
-        link: [{ required: true, message: 'link is required', trigger: 'blur' }],
-        subtitle: [{ required: true, message: 'subtitle is required', trigger: 'blur' }]
+        src: [{ required: true, message: 'link is required', trigger: 'blur' }],
+        body: [{ required: true, message: 'body is required', trigger: 'blur' }]
       },
       textMap: {
         update: '수정',
@@ -81,23 +108,35 @@ export default {
       }
     }
   },
+  computed: {
+    dialogLang() {
+      return [
+        { label: 'Korea', key: 'ko' },
+        { label: 'China', key: 'cn' },
+        { label: 'USA', key: 'en' },
+        { label: 'Japan', key: 'jp' }
+      ]
+    }
+  },
   created() {
     this.getData()
   },
   methods: {
-    ...mapActions('press', ['find', 'create', 'update', 'remove']),
+    ...mapActions('artists', ['find', 'create', 'update', 'remove']),
     async getData() {
       this.listLoading = true
-      const param = { lang: 'ko' }
+      const param = this.lang !== '전체 언어' ? { query: { lang: this.lang }} : {}
       this.list = (await this.find(param)).data
       this.listLoading = false
     },
     resetTemp() {
       this.temp = {
-        id: undefined,
-        title: '',
-        link: '',
-        subtitle: ''
+        id: null,
+        lang: 'Korea',
+        title: null,
+        src: null,
+        body: null,
+        sliders: null
       }
     },
     handleCreate() {
@@ -162,8 +201,8 @@ export default {
           })
           const index = this.list.indexOf(row)
           this.list.splice(index, 1)
-        })
-      }).catch(this.error)
+        }).catch(this.error)
+      })
     },
     error(err) {
       this.$notify.error({
@@ -176,6 +215,21 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss">
+  .text-hidden {
+    .el-table__body {
+      .el-table__row {
+        td {
+          &:nth-child(4) {
+            .cell {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+          }
+        }
+      }
+    }
+  }
   .filter-container {
     margin-bottom: 10px;
     &.tar {

@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function login(userinfo) {
   return request({
-    url: '/oauth/token',
+    url: '/authentication',
     method: 'post',
     data: userinfo
   })

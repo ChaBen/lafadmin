@@ -3,7 +3,8 @@
     <el-form ref="postForm" :model="postForm" :rules="rules" class="form-container">
       <div class="createPost-main-container">
         <div class="createPost-btns">
-          <el-button type="primary" @click="submitForm">저장</el-button>
+          <el-button type="primary" @click="handleCreate">추가</el-button>
+          <el-button type="primary" @click="handleUpdate">수정</el-button>
         </div>
         <el-tabs v-model="activeName" style="margin-top:15px;" type="border-card">
           <el-tab-pane v-for="item in tabMapOptions" :label="item.label" :key="item.key" :name="item.key">
@@ -16,7 +17,7 @@
                   <el-form-item prop="title">
                     <MDinput v-model="postForm[item.key].title" required>Title</MDinput>
                   </el-form-item>
-                  <Tinymce :height="1200" v-model="postForm[item.key].content" :item="item.key" />
+                  <Tinymce :height="1200" v-model="postForm[item.key].tickets" :item="item.key" />
                 </el-col>
               </el-row>
             </keep-alive>
@@ -24,11 +25,31 @@
         </el-tabs>
       </div>
     </el-form>
+    <el-dialog :visible.sync="dialogFormVisible" title="티켓 추가" width="80%">
+      <el-form ref="dataForm" :rules="dialogRules" :model="temp" label-position="left" label-width="70px">
+        <el-form-item label="언어">
+          <el-select v-model="temp.lang">
+            <el-option v-for="item in tabMapOptions" :key="item.key" :label="item.label" :value="item.key"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Title" prop="title">
+          <el-input v-model="temp.title" :autofocus="true"/>
+        </el-form-item>
+        <el-form-item label="Subtitle" prop="subtitle">
+          <el-input v-model="temp.subtitle"/>
+        </el-form-item>
+        <Tinymce :height="500" v-model="temp.tickets" />
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">cancel</el-button>
+        <el-button type="primary" @click="createData">Create</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getList, updateArticle } from '@/api/tickets'
+import { mapActions } from 'vuex'
 import Tinymce from '@/components/Tinymce'
 import MDinput from '@/components/MDinput'
 export default {
@@ -44,7 +65,11 @@ export default {
         en: {},
         jp: {}
       },
-      rules: {},
+      rules: {
+        title: [{ required: true, message: 'title is required', trigger: 'blur' }],
+        subtitle: [{ required: true, message: 'subtitle is required', trigger: 'blur' }],
+        tickets: [{ required: true, message: 'tickets is required', trigger: 'blur' }]
+      },
       tabMapOptions: [
         { label: 'Korea', key: 'ko' },
         { label: 'China', key: 'cn' },
@@ -52,38 +77,106 @@ export default {
         { label: 'Japan', key: 'jp' }
       ],
       activeName: 'ko',
-      createdTimes: 0
+      createdTimes: 0,
+      temp: {
+        lang: 'ko',
+        title: '',
+        subtitle: '',
+        tickets: ''
+      },
+      dialogRules: {
+        title: [{ required: true, message: 'title is required', trigger: 'blur' }],
+        subtitle: [{ required: true, message: 'subtitle is required', trigger: 'blur' }],
+        tickets: [{ required: true, message: 'tickets is required', trigger: 'blur' }]
+      },
+      dialogStatus: '',
+      dialogFormVisible: false
     }
   },
   created() {
-    getList().then((res) => {
-      const items = res.data.items
-      items.map(val => {
+    this.getData()
+    // getList().then((res) => {
+    //   console.log(res)
+    //   const items = res.data.items
+    //   items.map(val => {
+    //     Object.keys(this.postForm).map(v => {
+    //       if (val.lang === v) {
+    //         this.postForm[v] = {
+    //           title: val.title,
+    //           subtitle: val.subtitle,
+    //           content: val.content,
+    //           id: val.id
+    //         }
+    //       }
+    //     })
+    //   })
+    // })
+  },
+  methods: {
+    ...mapActions('tickets', ['find', 'create', 'update']),
+    async getData() {
+      const data = (await this.find()).data
+      data.map(val => {
         Object.keys(this.postForm).map(v => {
           if (val.lang === v) {
             this.postForm[v] = {
+              lang: val.lang,
               title: val.title,
               subtitle: val.subtitle,
-              content: val.content,
+              tickets: val.tickets,
               id: val.id
             }
           }
         })
       })
-    })
-  },
-  methods: {
-    submitForm() {
+    },
+    handleUpdate() {
       const data = this.postForm[this.activeName]
-      updateArticle(data).then(res => {
-        if (res.data) {
-          this.$notify({
-            title: '수정',
-            message: '수정성공',
-            type: 'success',
-            duration: 2000
-          })
+      this.update([data.id, data, {}]).then(() => {
+        this.$notify({
+          title: '수정',
+          message: '수정성공',
+          type: 'success',
+          duration: 2000
+        })
+      }).catch(this.error)
+    },
+    handleCreate() {
+      this.resetTemp()
+      this.dialogStatus = 'create'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    createData() {
+      this.$refs['dataForm'].validate(async(valid) => {
+        if (valid) {
+          this.create(this.temp).then(res => {
+            this.dialogFormVisible = false
+            this.postForm[this.temp.lang] = res
+            this.$notify({
+              title: '성공',
+              message: '추가성공',
+              type: 'success',
+              duration: 2000
+            })
+          }).catch(this.error)
         }
+      })
+    },
+    resetTemp() {
+      this.temp = {
+        lang: 'ko',
+        title: '',
+        subtitle: '',
+        tickets: ''
+      }
+    },
+    error(err) {
+      this.$notify.error({
+        title: 'Error',
+        message: err.message
       })
     }
   }
