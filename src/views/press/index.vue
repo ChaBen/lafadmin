@@ -88,7 +88,7 @@ export default {
     ...mapActions('press', ['find', 'create', 'update', 'remove']),
     async getData() {
       this.listLoading = true
-      const param = { lang: 'ko' }
+      const param = { lang: this.lang }
       this.list = (await this.find(param)).data
       this.listLoading = false
     },

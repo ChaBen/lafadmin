@@ -53,8 +53,8 @@ export default {
     return {
       loginForm: {
         strategy: 'local',
-        email: 'ckqlss@gmail.com',
-        password: 'admin520'
+        email: null,
+        password: null
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
