@@ -22,13 +22,13 @@ import Layout from '../views/layout/Layout'
   }
 **/
 export const constantRouterMap = [
-  { path: '/adm/login', component: () => import('@/views/login/index'), hidden: true },
+  { path: '/login', component: () => import('@/views/login/index'), hidden: true },
   { path: '/404', component: () => import('@/views/404'), hidden: true },
 
   {
-    path: '/adm/',
+    path: '/',
     component: Layout,
-    redirect: '/adm/dashboard',
+    redirect: '/dashboard',
     name: 'Dashboard',
     hidden: true,
     children: [{
