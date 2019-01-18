@@ -43,13 +43,6 @@ export default {
         callback()
       }
     }
-    const validatePass = (rule, value, callback) => {
-      if (value.length < 5) {
-        callback(new Error('비밀번호는 최소5자리여야 합니다'))
-      } else {
-        callback()
-      }
-    }
     return {
       loginForm: {
         strategy: 'local',
@@ -57,8 +50,7 @@ export default {
         password: null
       },
       loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePass }]
+        username: [{ required: true, trigger: 'blur', validator: validateUsername }]
       },
       loading: false,
       pwdType: 'password',

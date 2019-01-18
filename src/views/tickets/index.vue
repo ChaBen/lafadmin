@@ -1,23 +1,23 @@
 <template>
   <div class="createPost-container">
-    <el-form ref="postForm" :model="postForm" :rules="rules" class="form-container">
+    <el-form v-loading="loading" ref="postForm" :model="postForm" :rules="rules" class="form-container">
       <div class="createPost-main-container">
         <div class="createPost-btns">
           <el-button type="primary" @click="handleCreate">추가</el-button>
           <el-button type="primary" @click="handleUpdate">수정</el-button>
         </div>
         <el-tabs v-model="activeName" style="margin-top:15px;" type="border-card">
-          <el-tab-pane v-for="item in tabMapOptions" :label="item.label" :key="item.key" :name="item.key">
+          <el-tab-pane v-for="item in tabMapOptions" :label="item.label" :key="item.label" :name="item.label">
             <keep-alive>
               <el-row>
                 <el-col :span="24">
                   <el-form-item prop="subtitle">
-                    <MDinput v-model="postForm[item.key].subtitle" required>SubTitle</MDinput>
+                    <MDinput v-model="postForm[item.label].subtitle" required>SubTitle</MDinput>
                   </el-form-item>
                   <el-form-item prop="title">
-                    <MDinput v-model="postForm[item.key].title" required>Title</MDinput>
+                    <MDinput v-model="postForm[item.label].title" required>Title</MDinput>
                   </el-form-item>
-                  <Tinymce :height="1200" v-model="postForm[item.key].tickets" :item="item.key" />
+                  <Tinymce :height="1200" v-model="postForm[item.label].tickets" :item="item.label" />
                 </el-col>
               </el-row>
             </keep-alive>
@@ -29,7 +29,7 @@
       <el-form ref="dataForm" :rules="dialogRules" :model="temp" label-position="left" label-width="70px">
         <el-form-item label="언어">
           <el-select v-model="temp.lang">
-            <el-option v-for="item in tabMapOptions" :key="item.key" :label="item.label" :value="item.key"/>
+            <el-option v-for="item in tabMapOptions" :key="item.key" :label="item.label" :value="item.label"/>
           </el-select>
         </el-form-item>
         <el-form-item label="Title" prop="title">
@@ -60,11 +60,12 @@ export default {
   data() {
     return {
       postForm: {
-        ko: {},
-        cn: {},
-        en: {},
-        jp: {}
+        Korea: {},
+        China: {},
+        USA: {},
+        Japan: {}
       },
+      loading: true,
       rules: {
         title: [{ required: true, message: 'title is required', trigger: 'blur' }],
         subtitle: [{ required: true, message: 'subtitle is required', trigger: 'blur' }],
@@ -76,10 +77,10 @@ export default {
         { label: 'USA', key: 'en' },
         { label: 'Japan', key: 'jp' }
       ],
-      activeName: 'ko',
+      activeName: 'Korea',
       createdTimes: 0,
       temp: {
-        lang: 'ko',
+        lang: 'Korea',
         title: '',
         subtitle: '',
         tickets: ''
@@ -95,22 +96,6 @@ export default {
   },
   created() {
     this.getData()
-    // getList().then((res) => {
-    //   console.log(res)
-    //   const items = res.data.items
-    //   items.map(val => {
-    //     Object.keys(this.postForm).map(v => {
-    //       if (val.lang === v) {
-    //         this.postForm[v] = {
-    //           title: val.title,
-    //           subtitle: val.subtitle,
-    //           content: val.content,
-    //           id: val.id
-    //         }
-    //       }
-    //     })
-    //   })
-    // })
   },
   methods: {
     ...mapActions('tickets', ['find', 'create', 'update']),
@@ -129,6 +114,7 @@ export default {
           }
         })
       })
+      this.loading = false
     },
     handleUpdate() {
       const data = this.postForm[this.activeName]
@@ -167,7 +153,7 @@ export default {
     },
     resetTemp() {
       this.temp = {
-        lang: 'ko',
+        lang: 'Korea',
         title: '',
         subtitle: '',
         tickets: ''
